@@ -1,0 +1,28 @@
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/python:3.11-bullseye
+    volumes:
+      - ..:/workspace:cached
+    command: sleep infinity
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql+asyncpg://wildcard:wildcard@db:5432/wildcard
+      DATABASE_URL_SYNC: postgresql+psycopg2://wildcard:wildcard@db:5432/wildcard
+      UPLOAD_DIR: ./uploads
+      MAX_FILE_SIZE_MB: 50
+      EMBEDDING_MODEL: all-MiniLM-L6-v2
+    network_mode: service:db
+
+  db:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: wildcard
+      POSTGRES_PASSWORD: wildcard
+      POSTGRES_DB: wildcard
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
