@@ -5,10 +5,17 @@
   "workspaceFolder": "/workspace",
   "forwardPorts": [5173, 8000],
   "portsAttributes": {
-    "5173": { "label": "Frontend", "onAutoForward": "openBrowser" },
+    "5173": { "label": "Frontend (open this)", "onAutoForward": "openBrowser" },
     "8000": { "label": "Backend API", "onAutoForward": "silent" }
   },
   "postCreateCommand": "bash .devcontainer/setup.sh",
+  "postStartCommand": "bash .devcontainer/start.sh",
+  "secrets": {
+    "ANTHROPIC_API_KEY": {
+      "description": "Your Anthropic API key for Claude (required for Ask Questions mode)",
+      "documentationUrl": "https://console.anthropic.com/settings/keys"
+    }
+  },
   "customizations": {
     "vscode": {
       "extensions": [
