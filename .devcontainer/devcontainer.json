@@ -3,10 +3,9 @@
   "dockerComposeFile": "docker-compose.yml",
   "service": "app",
   "workspaceFolder": "/workspace",
-  "forwardPorts": [5173, 8000],
+  "forwardPorts": [8000],
   "portsAttributes": {
-    "5173": { "label": "Frontend (open this)", "onAutoForward": "openBrowser" },
-    "8000": { "label": "Backend API", "onAutoForward": "silent" }
+    "8000": { "label": "WildCard App", "onAutoForward": "openBrowser", "visibility": "public" }
   },
   "postCreateCommand": "bash .devcontainer/setup.sh",
   "postStartCommand": "bash .devcontainer/start.sh",
