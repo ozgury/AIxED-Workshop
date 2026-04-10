@@ -4,6 +4,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
@@ -43,7 +44,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -61,12 +62,28 @@ async def health():
     return {"status": "ok"}
 
 
-# Serve frontend static files (production build)
+# Serve frontend — try pre-built dist, fall back to inline HTML
 _frontend_dist = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
+
+# Debug endpoint
+@app.get("/api/debug")
+async def debug():
+    return {
+        "frontend_dist": str(_frontend_dist),
+        "exists": _frontend_dist.is_dir(),
+        "contents": os.listdir(_frontend_dist) if _frontend_dist.is_dir() else [],
+    }
+
+
 if _frontend_dist.is_dir():
     from fastapi.responses import FileResponse
 
-    app.mount("/assets", StaticFiles(directory=_frontend_dist / "assets"), name="assets")
+    if (_frontend_dist / "assets").is_dir():
+        app.mount("/assets", StaticFiles(directory=_frontend_dist / "assets"), name="assets")
+
+    @app.get("/", response_class=HTMLResponse)
+    async def serve_index():
+        return FileResponse(_frontend_dist / "index.html")
 
     @app.get("/{full_path:path}")
     async def serve_frontend(full_path: str):
@@ -74,3 +91,14 @@ if _frontend_dist.is_dir():
         if file_path.is_file():
             return FileResponse(file_path)
         return FileResponse(_frontend_dist / "index.html")
+else:
+    @app.get("/", response_class=HTMLResponse)
+    async def fallback_index():
+        return """<!DOCTYPE html>
+<html><head><title>WildCard</title></head>
+<body style="font-family:sans-serif;max-width:600px;margin:50px auto;text-align:center">
+<h1>WildCard</h1>
+<p>Backend is running but frontend dist not found.</p>
+<p>Expected at: """ + str(_frontend_dist) + """</p>
+<p><a href="/api/health">Check API health</a></p>
+</body></html>"""
