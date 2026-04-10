@@ -1,6 +1,5 @@
 #!/bin/bash
-# Auto-starts WildCard every time the Codespace starts/restarts
-# Serves everything from port 8000 (no separate frontend server needed)
+# Start WildCard - frontend is pre-built, just start the backend
 
 echo "=== Waiting for PostgreSQL ==="
 for i in {1..30}; do
@@ -8,32 +7,20 @@ for i in {1..30}; do
   sleep 1
 done
 
-echo "=== Building frontend ==="
-cd /workspace/frontend
-npm run build 2>&1 | tail -3
-
-echo "=== Making port 8000 public ==="
+echo "=== Making port public ==="
 gh codespace ports visibility 8000:public -c $CODESPACE_NAME 2>/dev/null || true
 
-echo "=== Starting backend (serves everything) ==="
-# Kill any existing backend
+echo "=== Starting WildCard ==="
 kill $(lsof -ti:8000) 2>/dev/null || true
 sleep 1
 cd /workspace/backend
-nohup uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 > /tmp/backend.log 2>&1 &
-echo "Backend PID: $!"
+nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 > /tmp/backend.log 2>&1 &
 
-sleep 3
+sleep 2
+echo ""
+curl -s localhost:8000/api/health && echo " - Backend OK"
 echo ""
 echo "========================================="
 echo "  WildCard is running!"
-echo ""
-echo "  Open: https://${CODESPACE_NAME}-8000.app.github.dev/"
-echo ""
-echo "  Log:  tail -f /tmp/backend.log"
-echo ""
-if [ -z "$ANTHROPIC_API_KEY" ]; then
-echo "  WARNING: ANTHROPIC_API_KEY is not set."
-echo "  'Ask Questions' mode won't work without it."
-fi
+echo "  https://${CODESPACE_NAME}-8000.app.github.dev/"
 echo "========================================="
